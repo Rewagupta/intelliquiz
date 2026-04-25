@@ -186,6 +186,19 @@ const ANALYTICS = {
   _truncate(str, len) {
     return str.length > len ? str.slice(0, len) + "…" : str;
   },
+
+  renderDirect(data, containerId) {
+  if (!data) return;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = `
+    <div class="analytics-wrap">
+      ${this._summaryCards(data)}
+      ${this._hardestQuestions(data)}
+      ${this._studentTable(data)}
+      ${this._difficultyProgression(data)}
+    </div>`;
+},
 };
 
 window.ANALYTICS = ANALYTICS;
