@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IntelliQuiz</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Styles (edit css/style.css to retheme everything) -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: HOME
+════════════════════════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="badge">✦ Adaptive · AI-Powered · Real-time</div>
+    <h1>IntelliQuiz</h1>
+    <p>Intelligent assessments that adapt to every student — not just another quiz tool.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary" id="btn-teacher">🎓 I'm a Teacher</button>
+      <button class="btn btn-secondary" id="btn-student">🧑‍🎓 I'm a Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: STUDENT JOIN
+════════════════════════════════════════════════════════════ -->
+<div id="page-join" class="page">
+  <nav class="nav" style="max-width:420px">
+    <span class="nav-logo">IntelliQuiz<span> / Join</span></span>
+    <button class="btn btn-ghost" id="btn-join-back">← Back</button>
+  </nav>
+
+  <div class="join-card card">
+    <h2 style="margin-bottom:8px">Join a Quiz</h2>
+    <p class="text-dim" style="margin-bottom:28px">Enter the room code your teacher shared</p>
+
+    <div class="form-group">
+      <label>Room Code</label>
+      <input type="text" id="join-code" class="room-code-input" maxlength="6" placeholder="ABC123"
+             oninput="this.value = this.value.toUpperCase()" />
+    </div>
+
+    <div class="form-group">
+      <label>Your Name</label>
+      <input type="text" id="join-name" placeholder="Enter your name" maxlength="30" />
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btn-join-submit">Join Quiz →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: TEACHER SETUP
+════════════════════════════════════════════════════════════ -->
+<div id="page-teacher-setup" class="page">
+  <nav class="nav">
+    <span class="nav-logo">IntelliQuiz<span> / Create Quiz</span></span>
+    <button class="btn btn-ghost" id="btn-teacher-back">← Back</button>
+  </nav>
+
+  <div class="dashboard">
+
+    <!-- Quiz settings -->
+    <div class="card" style="margin-bottom:24px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="flex:2;min-width:180px;margin:0">
+          <label>Quiz Title</label>
+          <input type="text" id="quiz-title" placeholder="e.g. Binary Trees Midterm" />
+        </div>
+        <div class="form-group" style="flex:1;min-width:120px;margin:0">
+          <label>Seconds per Question</label>
+          <input type="number" id="time-per-q" value="30" min="10" max="120" />
+        </div>
+        <div>
+          <button class="btn btn-primary" id="btn-launch-quiz">
+            🚀 Launch Quiz &nbsp;<span id="q-count">0</span> Q's
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="manual">✏️ Manual Questions</button>
+      <button class="tab-btn" data-tab="ai">🤖 AI Generate</button>
+      <button class="tab-btn" data-tab="review">📋 Review All</button>
+    </div>
+
+    <!-- TAB: Manual -->
+    <div id="tab-manual" class="tab-panel card">
+      <h3 style="margin-bottom:20px">Add a Question Manually</h3>
+      <div class="form-group">
+        <label>Question Text</label>
+        <textarea id="manual-question" rows="2" placeholder="e.g. What is the time complexity of binary search?"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="form-group" style="margin:0">
+          <label>Option A</label>
+          <input type="text" id="opt-A" placeholder="Option A" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Option B</label>
+          <input type="text" id="opt-B" placeholder="Option B" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Option C</label>
+          <input type="text" id="opt-C" placeholder="Option C" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Option D</label>
+          <input type="text" id="opt-D" placeholder="Option D" />
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="form-group" style="flex:1;margin:0">
+          <label>Correct Option</label>
+          <select id="correct-option">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;margin:0">
+          <label>Difficulty (1=Easy → 5=Hard)</label>
+          <select id="q-difficulty">
+            <option value="1">1 — Easy</option>
+            <option value="2" selected>2 — Medium-Easy</option>
+            <option value="3">3 — Medium</option>
+            <option value="4">4 — Hard</option>
+            <option value="5">5 — Expert</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Explanation (optional — shown to students after answering)</label>
+        <input type="text" id="q-explanation" placeholder="Brief explanation of the correct answer..." />
+      </div>
+      <button class="btn btn-secondary" id="btn-add-question">+ Add Question</button>
+    </div>
+
+    <!-- TAB: AI Generate -->
+    <div id="tab-ai" class="tab-panel ai-panel hidden">
+      <h3>🤖 AI Question Generator</h3>
+      <p class="text-dim" style="margin-bottom:20px">
+        Enter any topic — AI will generate MCQs across all 5 difficulty levels instantly.
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="flex:3;min-width:200px;margin:0">
+          <label>Topic</label>
+          <input type="text" id="ai-topic" placeholder="e.g. Binary Trees, Photosynthesis, World War II..." />
+        </div>
+        <div class="form-group" style="flex:1;min-width:80px;margin:0">
+          <label>Count</label>
+          <input type="number" id="ai-count" value="10" min="5" max="20" />
+        </div>
+        <div>
+          <button class="btn btn-primary" id="btn-ai-generate">✨ Generate</button>
+        </div>
+      </div>
+      <div id="ai-status" class="ai-status" style="margin-top:14px"></div>
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);font-size:0.83rem;color:var(--text-dim)">
+        💡 Make sure your API key is set in <code style="color:var(--accent)">js/config.js</code>
+      </div>
+    </div>
+
+    <!-- TAB: Review -->
+    <div id="tab-review" class="tab-panel hidden">
+      <div id="question-list" class="question-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: WAITING ROOM (Teacher sees students joining)
+════════════════════════════════════════════════════════════ -->
+<div id="page-waiting-room" class="page">
+  <nav class="nav">
+    <span class="nav-logo">IntelliQuiz<span> / Waiting Room</span></span>
+    <button class="btn btn-ghost" id="btn-waiting-back">← Back</button>
+  </nav>
+
+  <div class="card" style="width:100%;max-width:620px;text-align:center">
+    <p class="text-dim">Share this code with students</p>
+    <div class="room-code-display" id="waiting-room-code">------</div>
+
+    <div style="display:flex;gap:20px;justify-content:center;margin-bottom:28px">
+      <div><span class="text-accent" style="font-weight:700" id="waiting-q-count">0</span>
+        <span class="text-dim"> questions</span></div>
+      <div><span class="text-accent" style="font-weight:700" id="student-chip-count">0</span>
+        <span class="text-dim"> students joined</span></div>
+    </div>
+
+    <p class="text-dim" style="margin-bottom:12px;font-size:0.88rem">
+      Quiz: <strong id="waiting-quiz-title"></strong>
+    </p>
+
+    <div class="student-chips" id="student-chips" style="margin-bottom:28px;justify-content:center"></div>
+
+    <button class="btn btn-primary btn-full" id="btn-start-quiz">▶ Start Quiz</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: TEACHER LIVE VIEW
+════════════════════════════════════════════════════════════ -->
+<div id="page-live-view" class="page">
+  <nav class="nav">
+    <span class="nav-logo">IntelliQuiz<span> / Live</span></span>
+    <button class="btn btn-danger" id="btn-end-quiz">⏹ End & View Results</button>
+  </nav>
+
+  <div class="dashboard">
+    <h2 style="margin-bottom:20px">📡 Live Progress</h2>
+    <div id="live-student-list" class="question-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: QUIZ (Student View)
+════════════════════════════════════════════════════════════ -->
+<div id="page-quiz" class="page">
+  <div class="quiz-wrap">
+
+    <div class="quiz-header">
+      <!-- Circular Timer -->
+      <div class="timer-ring">
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="24" fill="none" stroke="var(--border)" stroke-width="4"/>
+          <circle id="timer-circle" cx="30" cy="30" r="24" fill="none"
+                  stroke="var(--accent)" stroke-width="4"
+                  stroke-linecap="round"
+                  style="stroke-dasharray:150.8;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear"/>
+        </svg>
+        <span class="timer-num" id="timer-num">30</span>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-bar-wrap">
+        <div class="progress-label" id="quiz-progress-label">Question 1 of 10</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Difficulty indicator -->
+      <div class="adaptive-pill" id="adaptive-pill">Difficulty: ★★☆☆☆</div>
+    </div>
+
+    <p class="text-dim" style="font-size:0.82rem;margin-bottom:16px;text-align:center"
+       id="quiz-title-display"></p>
+
+    <!-- Question Card -->
+    <div class="card question-card">
+      <h2 id="question-text">Loading question...</h2>
+      <div class="options-grid" id="options-container"></div>
+      <div class="explanation-box hidden" id="explanation-box"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: STUDENT RESULTS
+════════════════════════════════════════════════════════════ -->
+<div id="page-student-results" class="page">
+  <div style="width:100%;max-width:600px">
+
+    <div class="card" style="text-align:center;margin-bottom:24px">
+      <p class="text-dim" style="margin-bottom:8px">Your Score</p>
+      <div class="result-score" id="result-score">0%</div>
+      <div style="display:flex;gap:28px;justify-content:center;margin-top:20px">
+        <div><span class="text-accent" style="font-size:1.5rem;font-weight:700" id="result-correct">0</span>
+          <div class="text-dim" style="font-size:0.8rem">Correct</div></div>
+        <div><span style="font-size:1.5rem;font-weight:700" id="result-total">0</span>
+          <div class="text-dim" style="font-size:0.8rem">Total</div></div>
+        <div><span style="font-size:1.5rem;font-weight:700;color:var(--warn)" id="result-switches">0</span>
+          <div class="text-dim" style="font-size:0.8rem">Tab Switches</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:16px">Answer Breakdown</h3>
+      <div id="result-breakdown" class="result-breakdown"></div>
+    </div>
+
+    <div style="margin-top:24px;text-align:center">
+      <button class="btn btn-primary" id="btn-results-home">🏠 Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: TEACHER ANALYTICS
+════════════════════════════════════════════════════════════ -->
+<div id="page-analytics" class="page">
+  <nav class="nav">
+    <span class="nav-logo">IntelliQuiz<span> / Analytics</span></span>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-ghost" id="btn-export-csv">⬇ Export CSV</button>
+      <button class="btn btn-ghost" id="btn-analytics-back">🏠 Home</button>
+    </div>
+  </nav>
+
+  <div style="width:100%;max-width:900px">
+    <h2 style="margin-bottom:24px">📊 Quiz Analytics</h2>
+    <div id="analytics-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SCRIPTS — Order matters! config → state → modules → app
+════════════════════════════════════════════════════════════ -->
+<script src="js/config.js"></script>    <!-- ① Settings & API key -->
+<script src="js/state.js"></script>     <!-- ② Data & room logic -->
+<script src="js/ai.js"></script>        <!-- ③ AI question generator -->
+<script src="js/anticheat.js"></script> <!-- ④ Tab detection & timer -->
+<script src="js/analytics.js"></script> <!-- ⑤ Charts & reporting -->
+<script src="js/app.js"></script>       <!-- ⑥ UI & page controller -->
+
+</body>
+</html>
