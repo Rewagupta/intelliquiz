@@ -293,11 +293,16 @@ async function renderQuestion(roomCode, studentName, timePerQ) {
   document.getElementById("question-text").textContent = q.question;
 
   const letters = ["A","B","C","D"];
-  document.getElementById("options-container").innerHTML = q.options.map((opt, i) => `
-    <button class="option-btn" data-option="${opt}"
-      onclick="handleAnswer('${roomCode}','${studentName}',${JSON.stringify(opt)},${timePerQ})">
-      <span class="option-letter">${letters[i]}</span>${opt}
-    </button>`).join("");
+  const container = document.getElementById("options-container");
+  container.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.dataset.option = opt;
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt}`;
+    btn.addEventListener("click", () => handleAnswer(roomCode, studentName, opt, timePerQ));
+    container.appendChild(btn);
+});
 
   document.getElementById("explanation-box").classList.add("hidden");
   questionStartTime = Date.now();
