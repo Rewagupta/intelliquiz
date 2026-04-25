@@ -1,14 +1,6 @@
-// ============================================================
-// ai.js — AI Question Generation
-// Calls your own Vercel serverless function (key stays safe)
-// ============================================================
-
 const AI = {
-
   async generateQuestions(topic, count = 10) {
     try {
-      // Calls /api/generate — your serverless function on Vercel
-      // Gemini API key is stored safely on the server, not here
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -16,10 +8,7 @@ const AI = {
       });
 
       const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Generation failed");
-      }
+      if (!data.success) throw new Error(data.error || "Generation failed");
 
       const questions = data.questions.map((q, i) => ({
         ...q,

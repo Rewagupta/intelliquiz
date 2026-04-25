@@ -1,70 +1,56 @@
-// ============================================================
-// api/generate.js — Serverless function (runs on Vercel)
-// Your Gemini API key stays here — never exposed to browser
-// ============================================================
-
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { topic, count } = req.body;
-
-  if (!topic) {
-    return res.status(400).json({ error: "Topic is required" });
-  }
+  if (!topic) return res.status(400).json({ error: "Topic is required" });
 
   const prompt = `You are an expert educator. Generate exactly ${count || 10} multiple-choice quiz questions about "${topic}".
 
-Create questions at 5 difficulty levels (1=easiest, 5=hardest), with a mix across levels.
-
-Return ONLY valid JSON in this exact format, no markdown, no explanation:
+Return ONLY valid JSON, no markdown, no explanation:
 {
   "questions": [
     {
       "id": "q1",
-      "question": "Question text here?",
+      "question": "Question text?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctAnswer": "Option A",
       "difficulty": 1,
-      "explanation": "Brief explanation of why this is correct"
+      "explanation": "Brief explanation"
     }
   ]
 }
 
 Rules:
-- Each question must have exactly 4 options
-- correctAnswer must be one of the 4 options (exact text match)
+- Exactly 4 options per question
+- correctAnswer must exactly match one of the options
 - difficulty must be 1, 2, 3, 4, or 5
 - Make 2 questions per difficulty level
-- Keep answers short (max 8 words per option)
-- Keep questions concise (max 20 words)`;
+- Keep questions and answers concise`;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 8192,
-            responseMimeType: "application/json",
-          },
-        }),
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 4000,
+      }),
+    });
 
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error?.message || "Gemini API error");
+      throw new Error(err.error?.message || "Groq API error");
     }
 
     const data = await response.json();
-    const text = data.candidates[0].content.parts[0].text.trim();
+    const text = data.choices[0].message.content.trim();
     const clean = text
       .replace(/```json\n?/g, "")
       .replace(/```\n?/g, "")
