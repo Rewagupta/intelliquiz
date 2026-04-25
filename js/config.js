@@ -1,0 +1,25 @@
+const CONFIG = {
+  // No API keys here — all keys are safely stored in Vercel
+
+  ADAPTIVE: {
+    CORRECT_STREAK_TO_INCREASE: 3,
+    WRONG_TO_DECREASE: 1,
+    MIN_DIFFICULTY: 1,
+    MAX_DIFFICULTY: 5,
+    START_DIFFICULTY: 2,
+  },
+
+  QUIZ: {
+    DEFAULT_TIME_PER_QUESTION: 30,
+    ROOM_CODE_LENGTH: 6,
+    MAX_QUESTIONS: 20,
+    DEFAULT_QUESTIONS: 10,
+  },
+
+  ANTI_CHEAT: {
+    TAB_SWITCH_WARN_LIMIT: 3,
+    AUTO_SUBMIT_ON_LIMIT: true,
+  },
+};
+
+window.CONFIG = CONFIG;
