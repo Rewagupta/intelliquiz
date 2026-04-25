@@ -1,6 +1,6 @@
 const CONFIG = {
   // ── Gemini API ──
-  GEMINI_API_KEY: "AIzaSyB9nzXsZmu1CqIMdz9IMf8Ap5pQDdrzbSc",
+  GEMINI_API_KEY: "AIzaSyBCacCUToKF9QQhiDciwsaU5Ln15XIOsb8",
   GEMINI_MODEL: "gemini-2.5-flash",
 
   // ── Adaptive Difficulty ──
