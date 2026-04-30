@@ -1,5 +1,5 @@
 // ============================================================
-// firebase.js — Firebase Realtime Database
+// firebase.js — Firebase init + Auth + Database helpers
 // ============================================================
 
 const FIREBASE_CONFIG = {
@@ -14,7 +14,48 @@ const FIREBASE_CONFIG = {
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
+const auth = firebase.auth();
 
+// ── Auth helpers ──────────────────────────────────────────────
+const AUTH = {
+  // Sign up new teacher
+  async signUp(email, password, name) {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    await cred.user.updateProfile({ displayName: name });
+    await DB.set(`teachers/${cred.user.uid}/profile`, {
+      name, email, createdAt: Date.now()
+    });
+    return cred.user;
+  },
+
+  // Login existing teacher
+  async login(email, password) {
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+    return cred.user;
+  },
+
+  // Logout
+  async logout() {
+    await auth.signOut();
+  },
+
+  // Get current user
+  currentUser() {
+    return auth.currentUser;
+  },
+
+  // Listen for auth state changes
+  onAuthChange(callback) {
+    return auth.onAuthStateChanged(callback);
+  },
+
+  // Reset password
+  async resetPassword(email) {
+    await auth.sendPasswordResetEmail(email);
+  }
+};
+
+// ── Database helpers ──────────────────────────────────────────
 const DB = {
   async set(path, data) {
     await db.ref(path).set(data);
@@ -36,6 +77,17 @@ const DB = {
   off(path) {
     db.ref(path).off();
   },
+
+  async push(path, data) {
+    const ref = await db.ref(path).push(data);
+    return ref.key;
+  },
+
+  async delete(path) {
+    await db.ref(path).remove();
+  }
 };
 
+window.AUTH = AUTH;
 window.DB = DB;
+window.auth = auth;

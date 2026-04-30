@@ -178,6 +178,34 @@ const STATE = {
     localStorage.removeItem("iq_session");
   },
 
+  // ── Save quiz to teacher history ──────────────────────────
+async saveQuizToHistory(teacherUid, roomCode, quizTitle, questionCount) {
+  await DB.set(`teachers/${teacherUid}/quizzes/${roomCode}`, {
+    roomCode,
+    quizTitle,
+    questionCount,
+    createdAt: Date.now(),
+    status: "active",
+  });
+},
+
+// ── Mark quiz as ended in history ────────────────────────
+async endQuizInHistory(teacherUid, roomCode, studentCount, avgScore) {
+  await DB.update(`teachers/${teacherUid}/quizzes/${roomCode}`, {
+    status: "ended",
+    endedAt: Date.now(),
+    studentCount,
+    avgScore,
+  });
+},
+
+// ── Get all quizzes for a teacher ─────────────────────────
+async getTeacherHistory(teacherUid) {
+  const quizzes = await DB.get(`teachers/${teacherUid}/quizzes`);
+  if (!quizzes) return [];
+  return Object.values(quizzes).sort((a, b) => b.createdAt - a.createdAt);
+},
+
   save() {},
   load() {},
 };

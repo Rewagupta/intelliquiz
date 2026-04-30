@@ -31,6 +31,150 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
+     PAGE: TEACHER AUTH (Login / Signup)
+════════════════════════════════════════════════════════════ -->
+<div id="page-teacher-auth" class="page">
+  <nav class="nav" style="max-width:480px">
+    <span class="nav-logo">IntelliQuiz<span> / Teacher</span></span>
+    <button class="btn btn-ghost" onclick="ROUTER.show('page-home')">← Back</button>
+  </nav>
+
+  <div class="card" style="width:100%;max-width:440px">
+
+    <!-- Tab switcher -->
+    <div class="tab-bar" style="margin-bottom:28px">
+      <button class="tab-btn active" id="auth-tab-login"
+        onclick="switchAuthTab('login')">Login</button>
+      <button class="tab-btn" id="auth-tab-signup"
+        onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="auth-form-login">
+      <h2 style="margin-bottom:6px">Welcome back</h2>
+      <p class="text-dim" style="margin-bottom:24px;font-size:.9rem">
+        Login to access your quizzes and history
+      </p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="text" id="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Your password" />
+      </div>
+      <div id="login-error" style="color:var(--danger);font-size:.85rem;margin-bottom:14px;display:none"></div>
+      <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">
+        Login →
+      </button>
+      <div style="text-align:center;margin-top:16px">
+        <button onclick="doResetPassword()"
+          style="background:none;border:none;color:var(--text-dim);font-size:.82rem;cursor:pointer">
+          Forgot password?
+        </button>
+      </div>
+    </div>
+
+    <!-- Signup form -->
+    <div id="auth-form-signup" class="hidden">
+      <h2 style="margin-bottom:6px">Create account</h2>
+      <p class="text-dim" style="margin-bottom:24px;font-size:.9rem">
+        Free forever — save quizzes, track history
+      </p>
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="signup-name" placeholder="Ms. Ritu Rana" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="text" id="signup-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="Min 6 characters" />
+      </div>
+      <div id="signup-error" style="color:var(--danger);font-size:.85rem;margin-bottom:14px;display:none"></div>
+      <button class="btn btn-primary btn-full" id="btn-signup" onclick="doSignup()">
+        Create Account →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: TEACHER DASHBOARD (with history)
+════════════════════════════════════════════════════════════ -->
+<div id="page-teacher-dashboard" class="page">
+  <nav class="nav">
+    <span class="nav-logo">IntelliQuiz<span> / Dashboard</span></span>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="teacher-name-display" class="text-dim" style="font-size:.85rem"></span>
+      <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="dashboard">
+
+    <!-- Top action bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="margin-bottom:4px">Your Quizzes</h2>
+        <p class="text-dim" style="font-size:.88rem">All your past and current quiz sessions</p>
+      </div>
+      <button class="btn btn-primary" onclick="ROUTER.show('page-teacher-setup')">
+        + Create New Quiz
+      </button>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stat-cards" style="margin-bottom:28px" id="teacher-stats">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total-quizzes">0</div>
+        <div class="stat-label">Total Quizzes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total-students">0</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-avg-score">0%</div>
+        <div class="stat-label">Avg Score</div>
+      </div>
+    </div>
+
+    <!-- Quiz history list -->
+    <div id="quiz-history-list">
+      <div class="text-dim text-center" style="padding:40px">
+        Loading your quiz history...
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     PAGE: PAST QUIZ ANALYTICS
+════════════════════════════════════════════════════════════ -->
+<div id="page-past-analytics" class="page">
+  <nav class="nav">
+    <span class="nav-logo">IntelliQuiz<span> / Results</span></span>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" id="btn-export-past-csv">⬇ Export CSV</button>
+      <button class="btn btn-ghost" onclick="ROUTER.show('page-teacher-dashboard');loadTeacherDashboard()">
+        ← Dashboard
+      </button>
+    </div>
+  </nav>
+
+  <div style="width:100%;max-width:900px">
+    <h2 id="past-quiz-title" style="margin-bottom:6px"></h2>
+    <p id="past-quiz-meta" class="text-dim" style="margin-bottom:24px;font-size:.85rem"></p>
+    <div id="past-analytics-container"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
      PAGE: STUDENT JOIN
 ════════════════════════════════════════════════════════════ -->
 <div id="page-join" class="page">
@@ -373,6 +517,7 @@
 ════════════════════════════════════════════════════════════ -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script src="js/config.js"></script>
 <script src="js/firebase.js"></script>

@@ -23,7 +23,15 @@ function showCheatAlert(message) {
 }
 
 function initHome() {
-  document.getElementById("btn-teacher").onclick = () => ROUTER.show("page-teacher-setup");
+  document.getElementById("btn-teacher").onclick = () => {
+    const user = AUTH.currentUser();
+    if (user) {
+      loadTeacherDashboard();
+      ROUTER.show("page-teacher-dashboard");
+    } else {
+      ROUTER.show("page-teacher-auth");
+    }
+  };
   document.getElementById("btn-student").onclick = () => ROUTER.show("page-join");
 }
 
@@ -150,6 +158,12 @@ async function launchQuiz() {
     timePerQuestion: parseInt(document.getElementById("time-per-q").value) || 30,
   });
 
+  // Save to teacher history if logged in
+  const user = AUTH.currentUser();
+  if (user) {
+    await STATE.saveQuizToHistory(user.uid, roomCode, title, teacherQuestions.length);
+  }
+
   btn.disabled = false;
   btn.innerHTML = `🚀 Launch Quiz &nbsp;<span id="q-count">${teacherQuestions.length}</span> Q's`;
   showWaitingRoom(roomCode);
@@ -222,6 +236,19 @@ async function showTeacherAnalytics(roomCode) {
   ROUTER.show("page-analytics");
   const data = await STATE.getAnalytics(roomCode);
   ANALYTICS.renderDirect(data, "analytics-container");
+
+  // Save final results to teacher history
+  const user = AUTH.currentUser();
+  if (user && data) {
+    const avgScore = data.students.length
+      ? Math.round(data.students.reduce((sum, s) => {
+          const ans = s.answers || [];
+          return sum + (ans.length
+            ? Math.round(ans.filter(a=>a.correct).length/ans.length*100) : 0);
+        }, 0) / data.students.length)
+      : 0;
+    await STATE.endQuizInHistory(user.uid, roomCode, data.totalStudents, avgScore);
+  }
 
   document.getElementById("btn-analytics-back").onclick = () => {
     teacherQuestions = [];
@@ -466,17 +493,232 @@ function dismissRejoin() {
   STATE.clearSession();
 }
 
+// ── Auth Functions ────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById("auth-form-login").classList.toggle("hidden", tab !== "login");
+  document.getElementById("auth-form-signup").classList.toggle("hidden", tab !== "signup");
+  document.getElementById("auth-tab-login").classList.toggle("active", tab === "login");
+  document.getElementById("auth-tab-signup").classList.toggle("active", tab === "signup");
+}
+
+async function doLogin() {
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errEl = document.getElementById("login-error");
+  const btn = document.getElementById("btn-login");
+
+  if (!email || !password) return showAuthError("login", "Please fill in all fields.");
+
+  btn.disabled = true;
+  btn.textContent = "Logging in...";
+  errEl.style.display = "none";
+
+  try {
+    await AUTH.login(email, password);
+    btn.textContent = "Login →";
+    btn.disabled = false;
+    loadTeacherDashboard();
+    ROUTER.show("page-teacher-dashboard");
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = "Login →";
+    showAuthError("login", friendlyAuthError(err.code));
+  }
+}
+
+async function doSignup() {
+  const name = document.getElementById("signup-name").value.trim();
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
+  const btn = document.getElementById("btn-signup");
+
+  if (!name || !email || !password) return showAuthError("signup", "Please fill in all fields.");
+  if (password.length < 6) return showAuthError("signup", "Password must be at least 6 characters.");
+
+  btn.disabled = true;
+  btn.textContent = "Creating account...";
+
+  try {
+    await AUTH.signUp(email, password, name);
+    btn.textContent = "Create Account →";
+    btn.disabled = false;
+    loadTeacherDashboard();
+    ROUTER.show("page-teacher-dashboard");
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = "Create Account →";
+    showAuthError("signup", friendlyAuthError(err.code));
+  }
+}
+
+async function doLogout() {
+  await AUTH.logout();
+  teacherQuestions = [];
+  ROUTER.show("page-home");
+}
+
+async function doResetPassword() {
+  const email = document.getElementById("login-email").value.trim();
+  if (!email) return showAuthError("login", "Enter your email above first.");
+  try {
+    await AUTH.resetPassword(email);
+    showAuthError("login", "✅ Password reset email sent! Check your inbox.");
+  } catch(err) {
+    showAuthError("login", friendlyAuthError(err.code));
+  }
+}
+
+function showAuthError(form, message) {
+  const el = document.getElementById(`${form}-error`);
+  el.textContent = message;
+  el.style.display = "block";
+}
+
+function friendlyAuthError(code) {
+  const errors = {
+    "auth/user-not-found": "No account found with this email.",
+    "auth/wrong-password": "Incorrect password.",
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/weak-password": "Password must be at least 6 characters.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/too-many-requests": "Too many attempts. Please try again later.",
+    "auth/invalid-credential": "Incorrect email or password.",
+  };
+  return errors[code] || "Something went wrong. Please try again.";
+}
+
+// ── Teacher Dashboard ─────────────────────────────────────────
+async function loadTeacherDashboard() {
+  const user = AUTH.currentUser();
+  if (!user) return;
+
+  document.getElementById("teacher-name-display").textContent =
+    `👋 ${user.displayName || user.email}`;
+
+  const list = document.getElementById("quiz-history-list");
+  list.innerHTML = `<div class="text-dim text-center" style="padding:40px">Loading...</div>`;
+
+  const history = await STATE.getTeacherHistory(user.uid);
+
+  if (history.length === 0) {
+    list.innerHTML = `
+      <div class="card" style="text-align:center;padding:48px">
+        <div style="font-size:3rem;margin-bottom:16px">📝</div>
+        <h3 style="margin-bottom:8px">No quizzes yet</h3>
+        <p class="text-dim" style="margin-bottom:24px">Create your first quiz to get started</p>
+        <button class="btn btn-primary" onclick="ROUTER.show('page-teacher-setup')">
+          + Create Quiz
+        </button>
+      </div>`;
+    updateDashboardStats([], 0, 0);
+    return;
+  }
+
+  // Render history cards
+  list.innerHTML = history.map(q => {
+    const date = new Date(q.createdAt).toLocaleDateString("en-IN", {
+      day: "numeric", month: "short", year: "numeric"
+    });
+    const statusColor = q.status === "ended" ? "var(--green)" : "var(--warn)";
+    const statusText = q.status === "ended" ? "Completed" : "In Progress";
+
+    return `
+      <div class="q-item" style="cursor:pointer;margin-bottom:10px"
+        onclick="viewPastQuiz('${q.roomCode}', '${q.quizTitle}', '${date}')">
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px">
+            ${q.quizTitle}
+          </div>
+          <div style="font-size:.8rem;color:var(--text-dim);display:flex;gap:16px;flex-wrap:wrap">
+            <span>📅 ${date}</span>
+            <span>❓ ${q.questionCount} questions</span>
+            <span>👥 ${q.studentCount || 0} students</span>
+            ${q.avgScore !== undefined
+              ? `<span>📊 Avg: ${q.avgScore}%</span>`
+              : ""}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:.75rem;padding:3px 10px;border-radius:999px;
+            background:rgba(0,0,0,.2);color:${statusColor};
+            border:1px solid ${statusColor}">
+            ${statusText}
+          </span>
+          <span style="color:var(--text-dim)">→</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Update stats
+  const totalStudents = history.reduce((s, q) => s + (q.studentCount || 0), 0);
+  const scoresWithData = history.filter(q => q.avgScore !== undefined);
+  const avgScore = scoresWithData.length
+    ? Math.round(scoresWithData.reduce((s, q) => s + q.avgScore, 0) / scoresWithData.length)
+    : 0;
+
+  updateDashboardStats(history, totalStudents, avgScore);
+}
+
+function updateDashboardStats(history, totalStudents, avgScore) {
+  document.getElementById("stat-total-quizzes").textContent = history.length;
+  document.getElementById("stat-total-students").textContent = totalStudents;
+  document.getElementById("stat-avg-score").textContent = avgScore + "%";
+}
+
+async function viewPastQuiz(roomCode, title, date) {
+  ROUTER.show("page-past-analytics");
+  document.getElementById("past-quiz-title").textContent = title;
+  document.getElementById("past-quiz-meta").textContent =
+    `Room: ${roomCode} · ${date}`;
+
+  const data = await STATE.getAnalytics(roomCode);
+  if (!data || data.students.length === 0) {
+    document.getElementById("past-analytics-container").innerHTML =
+      `<div class="text-dim text-center" style="padding:40px">
+        No student data available for this quiz.
+      </div>`;
+    return;
+  }
+
+  ANALYTICS.renderDirect(data, "past-analytics-container");
+
+  document.getElementById("btn-export-past-csv").onclick = () => {
+    const rows = [["Student","Score%","Questions","Tab Switches","Completed"]];
+    data.students.forEach(s => {
+      const ans = s.answers || [];
+      const score = ans.length
+        ? Math.round(ans.filter(a=>a.correct).length/ans.length*100) : 0;
+      rows.push([s.name, score, ans.length, s.tabSwitches||0, s.completed]);
+    });
+    const csv = rows.map(r => r.join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+    a.download = `${title}-results.csv`;
+    a.click();
+  };
+}
+
 // ── Boot ──────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   initHome();
   initJoin();
   initTeacherSetup();
 
-  // Check for existing session — show rejoin prompt if found
+  // Check for existing student session
   const session = await STATE.rejoinSession();
   if (session) {
     showRejoinPrompt(session);
-  } else {
-    ROUTER.show("page-home");
+    return;
   }
+
+  // Check if teacher is already logged in
+  AUTH.onAuthChange(async (user) => {
+    if (user && window.location.hash !== "#quiz") {
+      // Auto-redirect logged in teacher to dashboard
+      // only on first load, not during quiz
+    }
+  });
+
+  ROUTER.show("page-home");
 });
