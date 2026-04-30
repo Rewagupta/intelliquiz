@@ -212,6 +212,56 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
+     PAGE: STUDENT WAITING (after joining, before quiz starts)
+════════════════════════════════════════════════════════════ -->
+<div id="page-student-waiting" class="page">
+  <div class="card" style="width:100%;max-width:480px;text-align:center">
+
+    <!-- Animated waiting indicator -->
+    <div style="margin-bottom:28px">
+      <div style="width:80px;height:80px;border-radius:50%;
+                  background:var(--purple-dim);border:2px solid rgba(124,58,237,.4);
+                  display:flex;align-items:center;justify-content:center;
+                  margin:0 auto 20px;font-size:2rem;
+                  animation:glow-pulse 2s ease-in-out infinite">
+        🧑‍🎓
+      </div>
+      <h2 style="margin-bottom:8px">You're in!</h2>
+      <p class="text-dim">Waiting for your teacher to start the quiz...</p>
+    </div>
+
+    <!-- Student info -->
+    <div style="background:var(--surface2);border:1px solid var(--border);
+                border-radius:var(--radius);padding:16px 20px;margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span class="text-dim" style="font-size:.85rem">Your Name</span>
+        <span id="sw-student-name" style="font-weight:600;color:var(--purple-light)"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="text-dim" style="font-size:.85rem">Room Code</span>
+        <span id="sw-room-code" style="font-family:var(--font-mono);
+               font-weight:700;color:var(--text);letter-spacing:4px"></span>
+      </div>
+    </div>
+
+    <!-- Animated dots -->
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:24px">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--purple);
+                  animation:pulse-dot .8s ease-in-out infinite"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--blue);
+                  animation:pulse-dot .8s .2s ease-in-out infinite"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--pink);
+                  animation:pulse-dot .8s .4s ease-in-out infinite"></div>
+    </div>
+
+    <p style="font-size:.8rem;color:var(--text-dim)">
+      Keep this tab open — the quiz will start automatically
+    </p>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
      PAGE: TEACHER LIVE VIEW
 ════════════════════════════════════════════════════════════ -->
 <div id="page-live-view" class="page">

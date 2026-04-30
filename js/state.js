@@ -25,10 +25,11 @@ const STATE = {
   },
 
   async joinRoom(code, studentName) {
-    code = code.toUpperCase();
-    const room = await DB.get(`rooms/${code}`);
-    if (!room) return { error: "Room not found" };
-    if (room.status === "ended") return { error: "Quiz has ended" };
+  code = code.toUpperCase();
+  const room = await DB.get(`rooms/${code}`);
+  if (!room) return { error: "Room not found" };
+  if (room.status === "ended") return { error: "Quiz has ended" };
+  if (room.status === "active") return { error: "Quiz already in progress — ask your teacher for a new room" };
 
     const shuffledQ = this.shuffleArray([...room.quiz.questions]);
 

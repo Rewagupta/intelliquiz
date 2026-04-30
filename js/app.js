@@ -44,7 +44,9 @@ function initJoin() {
     btn.textContent = "Join Quiz →";
 
     if (result.error) return alert(result.error);
-    startStudentQuiz(code, name);
+
+// Show waiting screen instead of starting immediately
+    showStudentWaiting(code, name);
   };
 }
 
@@ -371,6 +373,28 @@ async function showStudentResults(roomCode, studentName) {
     </div>`).join("");
 
   document.getElementById("btn-results-home").onclick = () => ROUTER.show("page-home");
+}
+
+// ── Student Waiting Screen ────────────────────────────────────
+function showStudentWaiting(roomCode, studentName) {
+  ROUTER.show("page-student-waiting");
+
+  // Set student name display
+  document.getElementById("sw-student-name").textContent = studentName;
+  document.getElementById("sw-room-code").textContent = roomCode;
+
+  // Listen for teacher to start the quiz
+  DB.on(`rooms/${roomCode}/status`, (status) => {
+    if (status === "active") {
+      DB.off(`rooms/${roomCode}/status`);
+      startStudentQuiz(roomCode, studentName);
+    }
+    if (status === "ended") {
+      DB.off(`rooms/${roomCode}/status`);
+      alert("This quiz has ended before it started.");
+      ROUTER.show("page-home");
+    }
+  });
 }
 
 // ── Boot ──────────────────────────────────────────────────────
