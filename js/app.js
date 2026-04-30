@@ -348,6 +348,7 @@ function updateTimerUI(timeLeft, total) {
 }
 
 async function showStudentResults(roomCode, studentName) {
+  STATE.clearSession(); 
   ROUTER.show("page-student-results");
   const student = await DB.get(`rooms/${roomCode}/students/${studentName}`);
   const answers = student.answers || [];
@@ -397,10 +398,85 @@ function showStudentWaiting(roomCode, studentName) {
   });
 }
 
-// ── Boot ──────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
+// ── Rejoin Prompt ─────────────────────────────────────────────
+function showRejoinPrompt(session) {
   ROUTER.show("page-home");
+
+  // Create rejoin banner
+  const banner = document.createElement("div");
+  banner.id = "rejoin-banner";
+  banner.style.cssText = `
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid rgba(124,58,237,.5);
+    border-radius: var(--radius-lg); padding: 20px 28px;
+    display: flex; align-items: center; gap: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.4); z-index: 999;
+    max-width: 500px; width: calc(100% - 32px);
+    backdrop-filter: blur(20px);
+    animation: slideIn .3s ease;
+  `;
+
+  banner.innerHTML = `
+    <div style="flex:1">
+      <div style="font-weight:700;color:var(--text);margin-bottom:4px">
+        🔄 Resume your quiz?
+      </div>
+      <div style="font-size:.85rem;color:var(--text-dim)">
+        You were in room <strong style="color:var(--purple-light);font-family:var(--font-mono)">${session.roomCode}</strong>
+        as <strong style="color:var(--text)">${session.studentName}</strong>
+        — Question ${(session.student.currentIndex || 0) + 1}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn btn-primary" style="padding:8px 16px;font-size:.85rem"
+        onclick="doRejoin('${session.roomCode}','${session.studentName}')">
+        Resume
+      </button>
+      <button class="btn btn-ghost" style="padding:8px 16px;font-size:.85rem"
+        onclick="dismissRejoin()">
+        Dismiss
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(banner);
+}
+
+async function doRejoin(roomCode, studentName) {
+  dismissRejoin();
+  const room = await DB.get(`rooms/${roomCode}`);
+  if (!room) return alert("Room no longer available.");
+
+  STATE.currentRoom = roomCode;
+  STATE.currentStudent = studentName;
+
+  if (room.status === "active") {
+    startStudentQuiz(roomCode, studentName);
+  } else if (room.status === "waiting") {
+    showStudentWaiting(roomCode, studentName);
+  } else {
+    alert("This quiz has already ended.");
+    STATE.clearSession();
+  }
+}
+
+function dismissRejoin() {
+  const banner = document.getElementById("rejoin-banner");
+  if (banner) banner.remove();
+  STATE.clearSession();
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
   initHome();
   initJoin();
   initTeacherSetup();
+
+  // Check for existing session — show rejoin prompt if found
+  const session = await STATE.rejoinSession();
+  if (session) {
+    showRejoinPrompt(session);
+  } else {
+    ROUTER.show("page-home");
+  }
 });

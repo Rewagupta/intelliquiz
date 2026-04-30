@@ -31,23 +31,35 @@ const STATE = {
   if (room.status === "ended") return { error: "Quiz has ended" };
   if (room.status === "active") return { error: "Quiz already in progress — ask your teacher for a new room" };
 
-    const shuffledQ = this.shuffleArray([...room.quiz.questions]);
+  // Duplicate name check
+  const existing = await DB.get(`rooms/${code}/students/${studentName}`);
+  if (existing) return { error: `"${studentName}" is already taken. Please use a different name.` };
 
-    await DB.set(`rooms/${code}/students/${studentName}`, {
-      name: studentName,
-      answers: [],
-      currentIndex: 0,
-      difficulty: CONFIG.ADAPTIVE.START_DIFFICULTY,
-      correctStreak: 0,
-      tabSwitches: 0,
-      shuffledQuestions: shuffledQ,
-      completed: false,
-    });
+  const shuffledQ = this.shuffleArray([...room.quiz.questions]);
 
-    this.currentRoom = code;
-    this.currentStudent = studentName;
-    return { success: true, room };
-  },
+  await DB.set(`rooms/${code}/students/${studentName}`, {
+    name: studentName,
+    answers: [],
+    currentIndex: 0,
+    difficulty: CONFIG.ADAPTIVE.START_DIFFICULTY,
+    correctStreak: 0,
+    tabSwitches: 0,
+    shuffledQuestions: shuffledQ,
+    completed: false,
+    joinedAt: Date.now(),
+  });
+
+  // Save session for rejoin
+  localStorage.setItem("iq_session", JSON.stringify({
+    roomCode: code,
+    studentName,
+    joinedAt: Date.now(),
+  }));
+
+  this.currentRoom = code;
+  this.currentStudent = studentName;
+  return { success: true, room };
+},
 
   async recordAnswer(roomCode, studentName, questionId, selectedOption, timeSpent) {
     const path = `rooms/${roomCode}/students/${studentName}`;
@@ -135,6 +147,35 @@ const STATE = {
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
+  },
+
+ // Rejoin existing session
+  async rejoinSession() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("iq_session"));
+      if (!saved) return null;
+
+      const { roomCode, studentName } = saved;
+      const room = await DB.get(`rooms/${roomCode}`);
+      if (!room) { localStorage.removeItem("iq_session"); return null; }
+      if (room.status === "ended") { localStorage.removeItem("iq_session"); return null; }
+
+      const student = await DB.get(`rooms/${roomCode}/students/${studentName}`);
+      if (!student) { localStorage.removeItem("iq_session"); return null; }
+      if (student.completed) { localStorage.removeItem("iq_session"); return null; }
+
+      this.currentRoom = roomCode;
+      this.currentStudent = studentName;
+      return { roomCode, studentName, room, student };
+    } catch(e) {
+      localStorage.removeItem("iq_session");
+      return null;
+    }
+  },
+
+  // Clear session on quiz completion
+  clearSession() {
+    localStorage.removeItem("iq_session");
   },
 
   save() {},
