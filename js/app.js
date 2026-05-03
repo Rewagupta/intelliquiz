@@ -175,17 +175,21 @@ function showWaitingRoom(roomCode) {
   document.getElementById("waiting-room-code").textContent = roomCode;
   document.getElementById("waiting-q-count").textContent = teacherQuestions.length;
 
+  let prevStudentCount = 0;
   STATE.listenToRoom(roomCode, (room) => {
     if (!room) return;
     document.getElementById("waiting-quiz-title").textContent = room.quiz?.title || "Quiz";
     const names = Object.keys(room.students || {});
     document.getElementById("student-chip-count").textContent = names.length;
+    if (names.length > prevStudentCount) SOUNDS.join();
+    prevStudentCount = names.length;
     document.getElementById("student-chips").innerHTML = names.length
       ? names.map(n => `<span class="chip">👤 ${n}</span>`).join("")
       : `<span class="text-dim pulse">Waiting for students to join...</span>`;
   });
 
   document.getElementById("btn-start-quiz").onclick = async () => {
+    SOUNDS.launch();
     STATE.stopListening(roomCode);
     await DB.update(`rooms/${roomCode}`, { status: "active" });
     showTeacherLiveView(roomCode);
@@ -353,6 +357,13 @@ async function handleAnswer(roomCode, studentName, selectedOption, timePerQ) {
     else if (btn.dataset.option === selectedOption) btn.classList.add("wrong");
   });
 
+  // ── Play sound ──────────────────────────────────────────
+  if (selectedOption === q.correctAnswer) {
+    SOUNDS.correct();
+  } else {
+    SOUNDS.wrong();
+  }
+
   if (q.explanation) {
     const box = document.getElementById("explanation-box");
     box.textContent = "💡 " + q.explanation;
@@ -371,12 +382,17 @@ function updateTimerUI(timeLeft, total) {
   if (circle) {
     circle.style.strokeDasharray = circ;
     circle.style.strokeDashoffset = circ * (1 - pct);
-    circle.style.stroke = pct > 0.4 ? "var(--accent)" : pct > 0.2 ? "var(--warn)" : "var(--danger)";
+    circle.style.stroke = pct > 0.4 ? "var(--purple-light)" : pct > 0.2 ? "var(--warn)" : "var(--danger)";
+  }
+  // ── Timer warning sound ───────────────────────────────────
+  if (timeLeft <= 5 && timeLeft > 0) {
+    SOUNDS.timerWarn();
   }
 }
 
 async function showStudentResults(roomCode, studentName) {
-  STATE.clearSession(); 
+  STATE.clearSession();
+  SOUNDS.complete();
   ROUTER.show("page-student-results");
   const student = await DB.get(`rooms/${roomCode}/students/${studentName}`);
   const answers = student.answers || [];
@@ -703,6 +719,12 @@ async function viewPastQuiz(roomCode, title, date) {
     a.download = `${title}-results.csv`;
     a.click();
   };
+}
+
+function toggleSound() {
+  const enabled = SOUNDS.toggle();
+  const btn = document.getElementById("sound-toggle");
+  if (btn) btn.textContent = enabled ? "🔊" : "🔇";
 }
 
 // ── Boot ──────────────────────────────────────────────────────
