@@ -418,8 +418,8 @@ async function showStudentResults(roomCode, studentName) {
     </div>`).join("");
 
   document.getElementById("btn-results-home").onclick = () => ROUTER.show("page-home");
-}
-// ── Download result card ──────────────────────────────────
+
+  // ── Download result card ────────────────────────────────
   const maxDifficulty = answers.length
     ? Math.max(...answers.map(a => a.difficulty || 1))
     : 1;
@@ -436,15 +436,7 @@ async function showStudentResults(roomCode, studentName) {
       quizTitle: room?.quiz?.title || "IntelliQuiz",
     });
   };
-      name: studentName,
-      score,
-      correct,
-      total,
-      tabSwitches: student.tabSwitches || 0,
-      maxDifficulty,
-      quizTitle: room?.quiz?.title || "IntelliQuiz",
-    });
-  };
+}
 
 // ── Student Waiting Screen ────────────────────────────────────
 function showStudentWaiting(roomCode, studentName) {
