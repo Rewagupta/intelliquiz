@@ -451,49 +451,6 @@ async function showMyResults(roomCode, studentName) {
     });
   };
 }
-  const student = await DB.get(`rooms/${roomCode}/students/${studentName}`);
-  const answers = student.answers || [];
-  const correct = answers.filter(a => a.correct).length;
-  const total = answers.length;
-  const score = total ? Math.round((correct / total) * 100) : 0;
-
-  document.getElementById("result-score").textContent = score + "%";
-  document.getElementById("result-correct").textContent = correct;
-  document.getElementById("result-total").textContent = total;
-  document.getElementById("result-switches").textContent = student.tabSwitches || 0;
-
-  document.getElementById("result-breakdown").innerHTML = answers.map(a => `
-    <div class="answer-row ${a.correct ? "correct-row" : "wrong-row"}">
-      <span>${a.correct ? "✅" : "❌"}</span>
-      <div>
-        <div style="font-weight:500">${a.question}</div>
-        ${!a.correct ? `<div class="text-dim" style="font-size:0.82rem">
-          Your answer: ${a.selectedOption || "No answer"} · Correct: ${a.correctAnswer}
-        </div>` : ""}
-      </div>
-      <span class="text-dim" style="font-size:0.78rem;margin-left:auto">${a.timeSpent}s</span>
-    </div>`).join("");
-
-  document.getElementById("btn-results-home").onclick = () => ROUTER.show("page-home");
-
-  // ── Download result card ────────────────────────────────
-  const maxDifficulty = answers.length
-    ? Math.max(...answers.map(a => a.difficulty || 1))
-    : 1;
-
-  document.getElementById("btn-download-card").onclick = async () => {
-    const room = await DB.get(`rooms/${roomCode}`);
-    RESULTCARD.generate({
-      name: studentName,
-      score,
-      correct,
-      total,
-      tabSwitches: student.tabSwitches || 0,
-      maxDifficulty,
-      quizTitle: room?.quiz?.title || "IntelliQuiz",
-    });
-  };
-}
 
 // ── Student Waiting Screen ────────────────────────────────────
 function showStudentWaiting(roomCode, studentName) {
