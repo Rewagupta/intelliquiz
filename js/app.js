@@ -495,10 +495,15 @@ function dismissRejoin() {
 
 // ── Auth Functions ────────────────────────────────────────────
 function switchAuthTab(tab) {
-  document.getElementById("auth-form-login").classList.toggle("hidden", tab !== "login");
-  document.getElementById("auth-form-signup").classList.toggle("hidden", tab !== "signup");
-  document.getElementById("auth-tab-login").classList.toggle("active", tab === "login");
-  document.getElementById("auth-tab-signup").classList.toggle("active", tab === "signup");
+  const formLogin = document.getElementById("auth-form-login");
+  const formSignup = document.getElementById("auth-form-signup");
+  const tabLogin = document.getElementById("auth-tab-login");
+  const tabSignup = document.getElementById("auth-tab-signup");
+
+  if (formLogin) formLogin.classList.toggle("hidden", tab !== "login");
+  if (formSignup) formSignup.classList.toggle("hidden", tab !== "signup");
+  if (tabLogin) tabLogin.classList.toggle("active", tab === "login");
+  if (tabSignup) tabSignup.classList.toggle("active", tab === "signup");
 }
 
 async function doLogin() {
