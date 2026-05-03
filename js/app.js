@@ -419,6 +419,24 @@ async function showStudentResults(roomCode, studentName) {
 
   document.getElementById("btn-results-home").onclick = () => ROUTER.show("page-home");
 }
+// ── Download result card ──────────────────────────────────
+  const maxDifficulty = answers.length
+    ? Math.max(...answers.map(a => a.difficulty || 1))
+    : 1;
+
+  const room = await DB.get(`rooms/${roomCode}`);
+
+  document.getElementById("btn-download-card").onclick = () => {
+    RESULTCARD.generate({
+      name: studentName,
+      score,
+      correct,
+      total,
+      tabSwitches: student.tabSwitches || 0,
+      maxDifficulty,
+      quizTitle: room?.quiz?.title || "IntelliQuiz",
+    });
+  };
 
 // ── Student Waiting Screen ────────────────────────────────────
 function showStudentWaiting(roomCode, studentName) {
