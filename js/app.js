@@ -426,7 +426,7 @@ async function showStudentResults(roomCode, studentName) {
 
   const room = await DB.get(`rooms/${roomCode}`);
 
-  document.getElementById("btn-download-card").onclick = () => {
+  document.getElementById("btn-download-card").onclick = async () => {
     RESULTCARD.generate({
       name: studentName,
       score,
