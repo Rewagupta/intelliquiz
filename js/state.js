@@ -102,6 +102,7 @@ const STATE = {
       difficulty,
       correctStreak,
       completed,
+      completedAt: completed ? Date.now() : null,
     });
   },
 

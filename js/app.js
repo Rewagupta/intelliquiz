@@ -371,20 +371,7 @@ async function handleAnswer(roomCode, studentName, selectedOption, timePerQ) {
   }
 
   await STATE.recordAnswer(roomCode, studentName, q.id, selectedOption, timeSpent);
-
-  // Check if more questions remain
-  const updatedStudent = await DB.get(`rooms/${roomCode}/students/${studentName}`);
-  const hasMore = updatedStudent &&
-    updatedStudent.currentIndex < updatedStudent.shuffledQuestions.length &&
-    !updatedStudent.completed;
-
-  setTimeout(() => {
-    if (hasMore) {
-      showLeaderboard(roomCode, studentName, timePerQ);
-    } else {
-      showStudentResults(roomCode, studentName);
-    }
-  }, 1800);
+  setTimeout(() => renderQuestion(roomCode, studentName, timePerQ), 1800);
 }
 
 function updateTimerUI(timeLeft, total) {
@@ -406,7 +393,64 @@ function updateTimerUI(timeLeft, total) {
 async function showStudentResults(roomCode, studentName) {
   STATE.clearSession();
   SOUNDS.complete();
+  // Show leaderboard first, then individual results
+  await showLeaderboard(roomCode, studentName);
+  // Add view my results button to leaderboard page
+  const lbPage = document.getElementById("page-leaderboard");
+  let myResultsBtn = document.getElementById("btn-view-my-results");
+  if (!myResultsBtn) {
+    myResultsBtn = document.createElement("button");
+    myResultsBtn.id = "btn-view-my-results";
+    myResultsBtn.className = "btn btn-secondary";
+    myResultsBtn.textContent = "📊 View My Results";
+    myResultsBtn.style.marginLeft = "12px";
+    document.querySelector("#page-leaderboard .hero-btns, #page-leaderboard div[style*='justify-content:center']")
+      ?.appendChild(myResultsBtn);
+  }
+  myResultsBtn.onclick = () => showMyResults(roomCode, studentName);
+}
+
+async function showMyResults(roomCode, studentName) {
   ROUTER.show("page-student-results");
+  const student = await DB.get(`rooms/${roomCode}/students/${studentName}`);
+  const answers = student.answers || [];
+  const correct = answers.filter(a => a.correct).length;
+  const total = answers.length;
+  const score = total ? Math.round((correct / total) * 100) : 0;
+
+  document.getElementById("result-score").textContent = score + "%";
+  document.getElementById("result-correct").textContent = correct;
+  document.getElementById("result-total").textContent = total;
+  document.getElementById("result-switches").textContent = student.tabSwitches || 0;
+
+  document.getElementById("result-breakdown").innerHTML = answers.map(a => `
+    <div class="answer-row ${a.correct ? "correct-row" : "wrong-row"}">
+      <span>${a.correct ? "✅" : "❌"}</span>
+      <div>
+        <div style="font-weight:500">${a.question}</div>
+        ${!a.correct ? `<div class="text-dim" style="font-size:0.82rem">
+          Your answer: ${a.selectedOption || "No answer"} · Correct: ${a.correctAnswer}
+        </div>` : ""}
+      </div>
+      <span class="text-dim" style="font-size:0.78rem;margin-left:auto">${a.timeSpent}s</span>
+    </div>`).join("");
+
+  document.getElementById("btn-results-home").onclick = () => ROUTER.show("page-home");
+
+  const maxDifficulty = answers.length
+    ? Math.max(...answers.map(a => a.difficulty || 1)) : 1;
+
+  document.getElementById("btn-download-card").onclick = async () => {
+    const room = await DB.get(`rooms/${roomCode}`);
+    RESULTCARD.generate({
+      name: studentName,
+      score, correct, total,
+      tabSwitches: student.tabSwitches || 0,
+      maxDifficulty,
+      quizTitle: room?.quiz?.title || "IntelliQuiz",
+    });
+  };
+}
   const student = await DB.get(`rooms/${roomCode}/students/${studentName}`);
   const answers = student.answers || [];
   const correct = answers.filter(a => a.correct).length;
@@ -759,79 +803,85 @@ function toggleSound() {
 }
 
 // ── Live Leaderboard ──────────────────────────────────────────
-async function showLeaderboard(roomCode, studentName, timePerQ) {
+async function showLeaderboard(roomCode, studentName) {
   ROUTER.show("page-leaderboard");
 
-  // Fetch all students and calculate rankings
   const room = await DB.get(`rooms/${roomCode}`);
   if (!room) return;
 
   const students = Object.values(room.students || {});
 
-  // Calculate score for each student
+  // Rank by score first, then by who completed fastest
   const ranked = students.map(s => {
     const answers = s.answers || [];
     const correct = answers.filter(a => a.correct).length;
     const score = answers.length
       ? Math.round((correct / answers.length) * 100) : 0;
+    const totalTime = answers.reduce((sum, a) => sum + (a.timeSpent || 0), 0);
     return {
       name: s.name,
       score,
       correct,
       total: answers.length,
+      totalTime,
+      completedAt: s.completedAt || Infinity,
+      completed: s.completed || false,
     };
-  }).sort((a, b) => b.score - a.score || b.correct - a.correct);
+  }).sort((a, b) => {
+    // Sort by score descending
+    if (b.score !== a.score) return b.score - a.score;
+    // Then by completion time ascending (faster = better)
+    if (a.completedAt !== b.completedAt) return a.completedAt - b.completedAt;
+    // Then by total time spent ascending
+    return a.totalTime - b.totalTime;
+  });
 
   // Render leaderboard
   const medals = ["🥇", "🥈", "🥉"];
   const list = document.getElementById("lb-list");
 
-  list.innerHTML = ranked.slice(0, 5).map((s, i) => {
+  list.innerHTML = ranked.map((s, i) => {
     const isMe = s.name === studentName;
     const rankClass = i < 3 ? `rank-${i+1}` : "rank-other";
     const rankDisplay = i < 3 ? medals[i] : `#${i+1}`;
+    const mins = Math.floor(s.totalTime / 60);
+    const secs = s.totalTime % 60;
+    const timeStr = mins > 0
+      ? `${mins}m ${secs}s`
+      : `${secs}s`;
 
     return `
       <div class="lb-item ${isMe ? "is-me" : ""}"
-        style="animation-delay:${i * 0.1}s">
+        style="animation-delay:${i * 0.08}s">
         <div class="lb-rank ${rankClass}">${rankDisplay}</div>
         <div class="lb-name">
-          ${s.name} ${isMe ? '<span style="font-size:.75rem;color:var(--purple-light)">(you)</span>' : ""}
+          ${s.name}
+          ${isMe ? '<span style="font-size:.75rem;color:var(--purple-light)"> (you)</span>' : ""}
         </div>
         <div style="text-align:right">
           <div class="lb-score">${s.score}%</div>
-          <div class="lb-answers">${s.correct}/${s.total} correct</div>
+          <div class="lb-answers">⏱ ${timeStr} · ${s.correct}/${s.total}</div>
         </div>
       </div>
     `;
   }).join("");
 
-  // Show student's own rank if not in top 5
+  // Show student's own rank if not in top 3
   const myRank = ranked.findIndex(s => s.name === studentName);
   const myRankEl = document.getElementById("lb-my-rank");
   const myRankNum = document.getElementById("lb-my-rank-num");
 
-  if (myRank >= 5) {
+  if (myRank >= 0) {
     myRankEl.style.display = "block";
-    myRankNum.textContent = `#${myRank + 1} of ${ranked.length}`;
-  } else {
-    myRankEl.style.display = "none";
+    const suffix = myRank === 0 ? "st" : myRank === 1 ? "nd" : myRank === 2 ? "rd" : "th";
+    myRankNum.textContent = `You ranked ${myRank + 1}${suffix} out of ${ranked.length} students`;
   }
 
-  // Countdown to next question
-  let countdown = 3;
-  const countEl = document.getElementById("lb-next-countdown");
-  countEl.textContent = `Next question in ${countdown}...`;
+  document.getElementById("lb-next-countdown").textContent =
+    "Final Results";
 
-  const countInterval = setInterval(() => {
-    countdown--;
-    if (countdown <= 0) {
-      clearInterval(countInterval);
-      renderQuestion(roomCode, studentName, timePerQ);
-    } else {
-      countEl.textContent = `Next question in ${countdown}...`;
-    }
-  }, 1000);
+  // Back to home button
+  document.getElementById("btn-results-home").onclick = () => ROUTER.show("page-home");
 }
 
 // ── Boot ──────────────────────────────────────────────────────
