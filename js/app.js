@@ -424,10 +424,18 @@ async function showStudentResults(roomCode, studentName) {
     ? Math.max(...answers.map(a => a.difficulty || 1))
     : 1;
 
-  const room = await DB.get(`rooms/${roomCode}`);
-
   document.getElementById("btn-download-card").onclick = async () => {
+    const room = await DB.get(`rooms/${roomCode}`);
     RESULTCARD.generate({
+      name: studentName,
+      score,
+      correct,
+      total,
+      tabSwitches: student.tabSwitches || 0,
+      maxDifficulty,
+      quizTitle: room?.quiz?.title || "IntelliQuiz",
+    });
+  };
       name: studentName,
       score,
       correct,
