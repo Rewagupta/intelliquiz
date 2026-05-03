@@ -63,14 +63,15 @@ let teacherQuestions = [];
 function initTeacherSetup() {
   document.getElementById("btn-teacher-back").onclick = () => ROUTER.show("page-home");
 
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
-      btn.classList.add("active");
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.remove("hidden");
-    };
-  });
+document.querySelectorAll("#page-teacher-setup .tab-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll("#page-teacher-setup .tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("#page-teacher-setup .tab-panel").forEach(p => p.classList.add("hidden"));
+    btn.classList.add("active");
+    const panel = document.getElementById(`tab-${btn.dataset.tab}`);
+    if (panel) panel.classList.remove("hidden");
+  };
+});
 
   document.getElementById("btn-add-question").onclick = addManualQuestion;
   document.getElementById("btn-ai-generate").onclick = generateAIQuestions;
