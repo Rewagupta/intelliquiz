@@ -371,7 +371,20 @@ async function handleAnswer(roomCode, studentName, selectedOption, timePerQ) {
   }
 
   await STATE.recordAnswer(roomCode, studentName, q.id, selectedOption, timeSpent);
-  setTimeout(() => renderQuestion(roomCode, studentName, timePerQ), 1800);
+
+  // Check if more questions remain
+  const updatedStudent = await DB.get(`rooms/${roomCode}/students/${studentName}`);
+  const hasMore = updatedStudent &&
+    updatedStudent.currentIndex < updatedStudent.shuffledQuestions.length &&
+    !updatedStudent.completed;
+
+  setTimeout(() => {
+    if (hasMore) {
+      showLeaderboard(roomCode, studentName, timePerQ);
+    } else {
+      showStudentResults(roomCode, studentName);
+    }
+  }, 1800);
 }
 
 function updateTimerUI(timeLeft, total) {
@@ -743,6 +756,82 @@ function toggleSound() {
   const enabled = SOUNDS.toggle();
   const btn = document.getElementById("sound-toggle");
   if (btn) btn.textContent = enabled ? "🔊" : "🔇";
+}
+
+// ── Live Leaderboard ──────────────────────────────────────────
+async function showLeaderboard(roomCode, studentName, timePerQ) {
+  ROUTER.show("page-leaderboard");
+
+  // Fetch all students and calculate rankings
+  const room = await DB.get(`rooms/${roomCode}`);
+  if (!room) return;
+
+  const students = Object.values(room.students || {});
+
+  // Calculate score for each student
+  const ranked = students.map(s => {
+    const answers = s.answers || [];
+    const correct = answers.filter(a => a.correct).length;
+    const score = answers.length
+      ? Math.round((correct / answers.length) * 100) : 0;
+    return {
+      name: s.name,
+      score,
+      correct,
+      total: answers.length,
+    };
+  }).sort((a, b) => b.score - a.score || b.correct - a.correct);
+
+  // Render leaderboard
+  const medals = ["🥇", "🥈", "🥉"];
+  const list = document.getElementById("lb-list");
+
+  list.innerHTML = ranked.slice(0, 5).map((s, i) => {
+    const isMe = s.name === studentName;
+    const rankClass = i < 3 ? `rank-${i+1}` : "rank-other";
+    const rankDisplay = i < 3 ? medals[i] : `#${i+1}`;
+
+    return `
+      <div class="lb-item ${isMe ? "is-me" : ""}"
+        style="animation-delay:${i * 0.1}s">
+        <div class="lb-rank ${rankClass}">${rankDisplay}</div>
+        <div class="lb-name">
+          ${s.name} ${isMe ? '<span style="font-size:.75rem;color:var(--purple-light)">(you)</span>' : ""}
+        </div>
+        <div style="text-align:right">
+          <div class="lb-score">${s.score}%</div>
+          <div class="lb-answers">${s.correct}/${s.total} correct</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Show student's own rank if not in top 5
+  const myRank = ranked.findIndex(s => s.name === studentName);
+  const myRankEl = document.getElementById("lb-my-rank");
+  const myRankNum = document.getElementById("lb-my-rank-num");
+
+  if (myRank >= 5) {
+    myRankEl.style.display = "block";
+    myRankNum.textContent = `#${myRank + 1} of ${ranked.length}`;
+  } else {
+    myRankEl.style.display = "none";
+  }
+
+  // Countdown to next question
+  let countdown = 3;
+  const countEl = document.getElementById("lb-next-countdown");
+  countEl.textContent = `Next question in ${countdown}...`;
+
+  const countInterval = setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      clearInterval(countInterval);
+      renderQuestion(roomCode, studentName, timePerQ);
+    } else {
+      countEl.textContent = `Next question in ${countdown}...`;
+    }
+  }, 1000);
 }
 
 // ── Boot ──────────────────────────────────────────────────────

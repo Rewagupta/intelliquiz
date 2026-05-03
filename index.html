@@ -474,6 +474,34 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
+     PAGE: LIVE LEADERBOARD (shown between questions)
+════════════════════════════════════════════════════════════ -->
+<div id="page-leaderboard" class="page">
+  <div style="width:100%;max-width:500px">
+
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:2.5rem;margin-bottom:8px">🏆</div>
+      <h2 style="margin-bottom:4px">Leaderboard</h2>
+      <p class="text-dim" id="lb-next-countdown" style="font-size:.9rem">
+        Next question in 3...
+      </p>
+    </div>
+
+    <div id="lb-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px"></div>
+
+    <div id="lb-my-rank" class="card" style="text-align:center;display:none">
+      <p class="text-dim" style="font-size:.85rem;margin-bottom:4px">Your Position</p>
+      <div id="lb-my-rank-num" style="font-size:2rem;font-weight:800;
+        background:var(--grad-text);background-size:200% auto;
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+        background-clip:text;animation:shimmer 3s linear infinite">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
      PAGE: STUDENT RESULTS
 ════════════════════════════════════════════════════════════ -->
 <div id="page-student-results" class="page">

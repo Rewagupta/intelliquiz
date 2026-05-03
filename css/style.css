@@ -364,3 +364,36 @@ label { display: block; margin-bottom: 6px; color: var(--text-dim); font-size: 0
   .perf-table th, .perf-table td { padding: 8px; }
   .room-code-display { font-size: 2.5rem; letter-spacing: 10px; }
 }
+
+/* ── Leaderboard ────────────────────────────────────────────── */
+.lb-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.3s;
+  animation: fadeUp 0.4s ease both;
+}
+.lb-item.is-me {
+  background: var(--purple-dim);
+  border-color: rgba(124,58,237,0.5);
+}
+.lb-rank {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head); font-weight: 800; font-size: 1rem;
+  flex-shrink: 0;
+}
+.rank-1 { background: rgba(251,191,36,0.2); color: #FBBF24; border: 1px solid rgba(251,191,36,0.4); }
+.rank-2 { background: rgba(148,163,184,0.2); color: #94A3B8; border: 1px solid rgba(148,163,184,0.4); }
+.rank-3 { background: rgba(180,120,60,0.2); color: #B4783C; border: 1px solid rgba(180,120,60,0.4); }
+.rank-other { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+.lb-name { flex: 1; font-weight: 600; font-size: .95rem; }
+.lb-score {
+  font-family: var(--font-mono); font-size: .85rem;
+  padding: 4px 12px; border-radius: 999px;
+  background: var(--purple-dim); color: var(--purple-light);
+  border: 1px solid rgba(124,58,237,0.3);
+}
+.lb-answers { font-size: .78rem; color: var(--text-dim); }
