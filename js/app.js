@@ -846,6 +846,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   initHome();
   initJoin();
   initTeacherSetup();
+  // Dismiss splash screen after 2 seconds
+  setTimeout(() => {
+    const splash = document.getElementById("splash-screen");
+    if (splash) {
+      splash.style.opacity = "0";
+      splash.style.visibility = "hidden";
+      setTimeout(() => splash.remove(), 600);
+    }
+  }, 2000);
 
   // Check for existing student session
   const session = await STATE.rejoinSession();
